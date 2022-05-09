@@ -252,6 +252,11 @@ if printnan==0 %only do this if no error has occured yet
             tsec = (tms - startms)./1000;
             dsec = .3*(ones(length(tsec),1));
             
+            % Extract response times:
+            if ~strcmpi('AudOnly',condtype) && ~strcmpi('VidOnly',condtype)
+                RT = [RT [d(ind).DisplayStim_RT]];
+            end
+            
             % Write to files:
             onsetfname = sprintf('onsets_%s.txt',condtype);
             fnames{end+1} = onsetfname;
@@ -265,20 +270,22 @@ if printnan==0 %only do this if no error has occured yet
             fprintf(fid,'%.3f\n',dsec);
             fclose(fid);
             
+            RTfname = sprintf('RTs_%s.txt',condtype);
+            fnames{end+1} = RTfname;
+            fid = fopen(sprintf('%s/%s',scored_dir,RTfname),'w');
+            fprintf(fid,'%.3f\n',[d(ind).DisplayStim_RT]);
+            fclose(fid);
+            
+            % Write summary to screen:
+            fprintf(1,'\n+ Wrote onsets for %d %s events to file %s',length(tsec),condtype,onsetfname);
+            
             % Store it:
             E.(condtype).onsets = tsec;
             E.(condtype).durations = dsec;
             E.(condtype).N = length(tsec);
             E.(condtype).onsetfname = onsetfname;
             E.(condtype).durationfname = durationfname;
-            
-            % Write summary to screen:
-            fprintf(1,'\n+ Wrote onsets for %d %s events to file %s',length(tsec),condtype,onsetfname);
-            
-            % Extract response times:
-            if ~strcmpi('AudOnly',condtype) && ~strcmpi('VidOnly',condtype)
-                RT = [RT [d(ind).DisplayStim_RT]];
-            end
+            E.(condtype).RT = [d(ind).DisplayStim_RT];
             
         end % if not Null
     end
@@ -385,5 +392,62 @@ fprintf(1,'\n\n+ Wrote scored data to file %s\n\n',scoredfname);
 % Done
 fnames = fnames';
 fprintf(1,'\n\n ++ Done! ++\n\n');
+
+%% ========================================================================
+%% Write a simpler single onsets file in table 't' (incl. RTs) like Cam-CAN MEG SMT
+%% ========================================================================
+outName = fullfile(scored_dir,['sub-',ccid,'_ses-smt_task-smt_events.tsv']);
+try
+  t = table(); %init
+  
+  tmp_onsets_a = readtable(fullfile(scored_dir,'onsets_AudVid1200.txt'),'ReadVariableNames',false);
+  tmp_onsets_b = readtable(fullfile(scored_dir,'onsets_AudVid600.txt'),'ReadVariableNames',false);
+  tmp_onsets_c = readtable(fullfile(scored_dir,'onsets_AudVid300.txt'),'ReadVariableNames',false);
+  tmp_onsets_d = readtable(fullfile(scored_dir,'onsets_AudOnly.txt'),'ReadVariableNames',false);
+  tmp_onsets_e = readtable(fullfile(scored_dir,'onsets_VidOnly.txt'),'ReadVariableNames',false);
+  
+  tmp_RT_a = readtable(fullfile(scored_dir,'RTs_AudVid1200.txt'),'ReadVariableNames',false);
+  tmp_RT_b = readtable(fullfile(scored_dir,'RTs_AudVid600.txt'),'ReadVariableNames',false);
+  tmp_RT_c = readtable(fullfile(scored_dir,'RTs_AudVid300.txt'),'ReadVariableNames',false);
+  tmp_RT_d = readtable(fullfile(scored_dir,'RTs_AudOnly.txt'),'ReadVariableNames',false);
+  tmp_RT_e = readtable(fullfile(scored_dir,'RTs_VidOnly.txt'),'ReadVariableNames',false);
+  
+  onsets = [tmp_onsets_a.Var1;tmp_onsets_b.Var1;tmp_onsets_c.Var1;tmp_onsets_d.Var1;tmp_onsets_e.Var1];
+  labels = [repmat({'AudVid1200'},height(tmp_onsets_a),1);repmat({'AudVid600'},height(tmp_onsets_b),1);repmat({'AudVid300'},height(tmp_onsets_c),1);repmat({'AudOnly'},height(tmp_onsets_d),1);repmat({'VidOnly'},height(tmp_onsets_e),1)];
+  RTs = [tmp_RT_a.Var1;tmp_RT_b.Var1;tmp_RT_c.Var1;tmp_RT_d.Var1;tmp_RT_e.Var1];
+  assert(length(RTs) == length(onsets),'Error - missing RTs??')
+
+  %% Sort variables
+  [onsets,I] = sort(onsets);
+  RTs = RTs(I);
+  labels = labels(I);
+  
+  %% Fill in table
+  t.onset(1) = nan;         %init
+  t.duration(1) = nan;      %init
+  t.trial_type{1} = 'NaN';  %init
+  
+  for trial = 1:length(onsets)
+    
+    %new row: stim onset
+    t.onset(end+1) = onsets(trial);
+    t.duration(end) = 0.3; %always ...
+    t.trial_type(end) = labels(trial);
+    
+    %new row: RT onset
+    t.onset(end+1) = t.onset(end) + ( RTs(trial)/1000 );
+    t.duration(end) = 0; %always ...
+    t.trial_type{end} = 'button';
+      
+  end
+  t(1,:) = []; %drop the init NaN row!
+  
+  %% Write the new events table
+  writetable(t,outName,'delimiter','\t','FileType','text');
+  
+catch
+  fprintf('Error writing the events table: %s\n',outName')
+end
+
 
 return
