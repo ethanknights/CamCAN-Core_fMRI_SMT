@@ -20,4 +20,3 @@ that include event onsets for button presses (i.e. Reaction Times; RTs).
 | ... | ... | ... |
 | 504.063 | 0.3 | AudVid300 |
 | 504.323 | 0 | button |
-�
