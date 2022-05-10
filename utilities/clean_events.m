@@ -6,7 +6,7 @@
 
 function [cleanEvents] = clean_events(FileName)
 
-  d = readtable(FileName,'FileType','text')
+  d = readtable(FileName,'FileType','text');
 
   idx = find(strcmp(d.trial_type,'button'));
   for i = 1:length(idx); check(i) = (d.onset(idx(i)) - d.onset(idx(i)-1)) == 0; end
