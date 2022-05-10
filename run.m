@@ -1,8 +1,3 @@
-%   cd /imaging/camcan/cc700-rawdata/MRI/data/CC110033
-%   cd /imaging/camcan/cc700-scored/MRI/release001/data/CC110033
-%   cd /imaging/camcan/cc700-scored/MRI/release001/analysis_scripts
-
-
 clear
 
 CCIDList = dir('/imaging/camcan/cc700-rawdata/MRI/data/CC*'); CCIDList = {CCIDList.name}';
@@ -20,3 +15,20 @@ owflag = false;
 [R fname errmsg] = MRI_wrapper_script(ccid,raw_dir,scored_dir,owflag)
 
 end
+
+return
+
+
+%% Notes
+%% ========================================================================
+%Failing subjects:
+%'CC410222'
+%This subject had no events file in 2019 BIDS either. Everyones event order
+%is the same... but time and RTs do vary
+
+
+%% Move New Data to Cam-CAN central space
+%% ========================================================================
+!mkdir /imaging/camcan/cc700-scored/MRI/release002
+!mv /imaging/camcan/sandbox/ek03/fixCC700/SMT_RT/* /imaging/camcan/cc700-scored/MRI/release002
+
