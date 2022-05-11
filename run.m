@@ -17,7 +17,25 @@ for s = 1:length(CCIDList)
   
 end
 
-return
+%% Also run the output events file through clean_events.m to remove missing 
+%% button presses
+%% ========================================================================
+addpath utilities
+
+for s = 1:length(CCIDList); CCID = CCIDList{s};
+  
+  scored_dir = '/imaging/camcan/cc700-scored/MRI/release002/data';
+  fileName = fullfile(scored_dir,CCID,['sub-',CCID,'_ses-smt_task-smt_events.tsv']);
+   
+  if exist(fileName,'file')
+    
+    [cleanEvents] = clean_events(fileName);
+    
+    writetable(cleanEvents,fileName,'FileType','text');
+    
+  end
+  
+end
 
 %% Notes
 %% ========================================================================
