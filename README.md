@@ -22,8 +22,8 @@ that include event onsets for button presses (i.e. Reaction Times; RTs).
 
 <br>
 
-# For Your Analysis
-Ensure you screen for 0ms RT. An example function ```cleanEvents.m``` can be found in the utilities directory:
+# Note on Missing RTs
+RTs that are missing (0ms difference between trial onset & RT) have already been removed using the utilities clean_events.m function:
 
 ```c
 %% Purpose: Remove any 0ms RTs from an events data table.
